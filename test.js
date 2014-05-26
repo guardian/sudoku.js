@@ -5,6 +5,13 @@
   var INIITAL_WIDTH = 300;
   var INITIAL_HEIGHT = 300;
 
+  var KEYCODE_BACKSPACE = 8;
+  var KEYCODE_DELETE = 46;
+  var KEYCODE_LEFT = 37;
+  var KEYCODE_UP = 38;
+  var KEYCODE_RIGHT = 39;
+  var KEYCODE_DOWN = 40;
+
   var sizeForm = document.getElementById("size-form");
 
   var Cell = React.createClass({
@@ -107,7 +114,6 @@
             col: col,
             row: row,
             value: null,
-            hasFocus: false,
             editable: true
           });
         }
@@ -116,7 +122,8 @@
       return {
         width: 300,
         height: 300,
-        cells: cells
+        cells: cells,
+        focus: null
       };
     },
 
@@ -153,76 +160,107 @@
       return this.getDOMNode().getBoundingClientRect();
     },
 
+    updateState: function (updates) {
+      this.setState(React.addons.update(this.state, updates));
+    },
+
     handleResize: function (event) {
       event.preventDefault();
 
       var width = document.getElementById("size-form__width").value;
       var height = document.getElementById("size-form__height").value;
 
-      this.setState(React.addons.update(this.state, {
+      this.updateState({
         width: {$set: width},
         height: {$set: height}
-      }));
+      });
     },
 
     unfocus: function () {
-      this.mapCells(function (cell) {
-        return React.addons.update(cell, {
-          hasFocus: {$set: false}
-        });
+      this.updateState({
+        focus: {$set: null}
       });
     },
 
     hasFocus: function () {
-      for (var i = 0; i < this.state.cells.length; ++i) {
-        if (this.state.cells[i].hasFocus) {
-          return true;
+      return this.state.focus != null;
+    },
+
+    isFocussed: function (cell) {
+      return this.hasFocus() && this.state.focus.col === cell.col && this.state.focus.row === cell.row;
+    },
+
+    updateCell: function (col, row, update) {
+      this.updateState({
+        cells: {
+          $set: this.state.cells.map(function (cell) {
+            if (cell.col == col && cell.row == row) {
+              return React.addons.update(cell, update);
+            } else {
+              return cell;
+            }
+          })
         }
+      });
+    },
+
+    getCell: function (col, row) {
+      for (var i = 0; i < this.state.cells.length; ++i) {
+        var cell = this.state.cells[i];
+
+        if (cell.col == col && cell.row == row)
+          return cell;
       }
 
-      return false;
+      throw "No cell at " + col + ", " + row;
     },
 
     handleKeyDown: function (event) {
       if (this.hasFocus()) {
-        if (event.keyCode >= 48 && event.keyCode <= 58) {
-          event.preventDefault();
+        event.preventDefault();
 
-          var number = event.keyCode - 48;
+        var col = this.state.focus.col;
+        var row = this.state.focus.row;
+        var focussedCell = this.getCell(col, row);
 
-          this.mapCells(function (cell) {
-            return React.addons.update(cell, {
-              value: {$set: (cell.hasFocus && cell.editable) ? number : cell.value}
-            });
-          });
+        if (event.keyCode == KEYCODE_UP) {
+          this.setFocus(focussedCell.col, Math.max(0, focussedCell.row - 1));
+        } else if (event.keyCode == KEYCODE_DOWN) {
+          this.setFocus(focussedCell.col, Math.min(8, focussedCell.row + 1));
+        } else if (event.keyCode == KEYCODE_LEFT) {
+          this.setFocus(Math.max(focussedCell.col - 1, 0), focussedCell.row);
+        } else if (event.keyCode == KEYCODE_RIGHT) {
+          this.setFocus(Math.min(focussedCell.col + 1, 8), focussedCell.row);
         }
 
-        // backspace or delete 
-        if (event.keyCode == 8 || event.keyCode == 46) {
-          event.preventDefault();
-
-          this.mapCells(function (cell) {
-            return React.addons.update(cell, {
-              value: {$set: (cell.hasFocus && cell.editable) ? null : cell.value}
+        if (focussedCell.editable) {
+          if (event.keyCode >= 48 && event.keyCode <= 58) {
+            var number = event.keyCode - 48;
+            
+            this.updateCell(col, row, {
+              value: {$set: number}
             });
-          });
+          }
+
+          if (event.keyCode == KEYCODE_BACKSPACE || event.keyCode == KEYCODE_DELETE) {
+            event.preventDefault();
+
+            this.updateCell(col, row, {
+              value: {$set: null}
+            });
+          }
         }
       }
     },
 
-    mapCells: function (f) {
-      this.setState(React.addons.update(this.state, {
-        cells: {$set: this.state.cells.map(f)}
-      }));
-    },
-
     setFocus: function (col, row) {
-      this.mapCells(function (cell) {
-        var hasFocus = (cell.col == col && cell.row == row);
-
-        return React.addons.update(cell, {
-          hasFocus: {$set: hasFocus}
-        });
+      this.updateState({
+        focus: {
+          $set: {
+            row: row,
+            col: col
+          }
+        }
       });
     },
 
@@ -364,7 +402,7 @@
               (conflicts["columns"].indexOf(cell.col) != -1);
 
         cells.push(
-          <Cell x={cellX} y={cellY} width={this.cellWidth()} height={this.cellHeight()} value={cell.value} hasFocus={cell.hasFocus} isInConflict={conflicted} />
+          <Cell x={cellX} y={cellY} width={this.cellWidth()} height={this.cellHeight()} value={cell.value} hasFocus={this.isFocussed(cell)} isInConflict={conflicted} />
         );
       }
 

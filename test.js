@@ -18,10 +18,12 @@
       var className = (this.props.hasFocus) ? "grid__cell__rect-focused" : "grid__cell__rect-unfocused";
 
       var style = (function () {
-        if (this.props.hasFocus) {
+        if (this.props.hasFocus && this.props.isInConflict) {
+          return {fill: "#FA5858"};
+        } else if (this.props.hasFocus) {
           return {fill: "#efefef"};
         } else if (this.props.isInConflict) {
-          return {fill: "#ccffff"};
+          return {fill: "#F5A9A9"};
         } else {
           return {};
         }
@@ -106,8 +108,7 @@
             row: row,
             value: null,
             hasFocus: false,
-            editable: true,
-            isInConflict: false
+            editable: true
           });
         }
       }
@@ -214,7 +215,104 @@
       window.addEventListener("click", this.handleClick);
     },
 
+    getConflicts: function () {
+      var rows = {};
+      var columns = {};
+      var squares = {};
+
+      // First pass, insert into the above hashes what is in each row, column and square
+      for (var i = 0; i < this.state.cells.length; ++i) {
+        var cell = this.state.cells[i];
+
+        if (cell.value != null) {
+          if (!rows.hasOwnProperty(cell.row)) {
+            rows[cell.row] = [];
+          }
+          rows[cell.row].push(cell.value);
+
+          if (!columns.hasOwnProperty(cell.col)) {
+            columns[cell.col] = [];
+          }
+          columns[cell.col].push(cell.value);
+
+          var squareX = Math.floor(cell.col / 3);
+          var squareY = Math.floor(cell.row / 3);
+
+          if (!squares.hasOwnProperty(squareX)) {
+            squares[squareX] = {};
+          }
+          if (!squares[squareX].hasOwnProperty(squareY)) {
+            squares[squareX][squareY] = [];
+          }
+
+          squares[squareX][squareY].push(cell.value);
+        }
+      }
+
+      // Now iterate through each and return conflicts found
+      var conflicts = {
+        rows: [],
+        columns: [],
+        squares: []
+      };
+      
+      // Really, JavaScript?
+      var sortNumerically = function (xs) {
+        xs.sort(function (a, b) { return a - b; });
+      };
+
+      var hasConsecutiveDuplicate = function (xs) {
+        for (var i = 1; i < xs.length; ++i) {
+          if (xs[i] === xs[i - 1]) {
+            return true;
+          }
+        }
+
+        return false;
+      };
+
+      var hasDuplicate = function (xs) {
+        sortNumerically(xs);
+        return hasConsecutiveDuplicate(xs);
+      };
+
+      // REALLY, JavaScript?!
+      for (var row in rows) {
+        if (rows.hasOwnProperty(row)) {
+          if (hasDuplicate(rows[row])) {
+            conflicts.rows.push(parseInt(row));
+          }
+        }
+      }
+
+      for (var column in columns) {
+        if (columns.hasOwnProperty(column)) {
+          if (hasDuplicate(columns[column])) {
+            conflicts.columns.push(parseInt(column));
+          }
+        }
+      }
+
+      for (var squareX in squares) {
+        if (squares.hasOwnProperty(squareX)) {
+          for (var squareY in squares[squareX]) {
+            if (squares[squareX].hasOwnProperty(squareY)) {
+              if (hasDuplicate(squares[squareX][squareY])) {
+                conflicts.squares.push({
+                  x: parseInt(squareX),
+                  y: parseInt(squareY)
+                });
+              }
+            }
+          }
+        }
+      }
+
+      return conflicts;
+    },
+
     render: function () {
+      var conflicts = this.getConflicts();
       var cells = [];
 
       for (var i = 0; i < this.state.cells.length; ++i) {
@@ -223,8 +321,27 @@
         var cellX = this.cellWidth() * cell.col;
         var cellY = this.cellHeight() * cell.row;
 
+        var squareX = Math.floor(cell.col / 3);
+        var squareY = Math.floor(cell.row / 3);
+
+        /** TODO this sucks. Use a library such as Underscore or Lo Dash? */
+        var squareConflict = false;
+
+        for (var j = 0; j < conflicts.squares.length; ++j) {
+          var square = conflicts.squares[j];
+
+          if (square.x == squareX && square.y == squareY) {
+            squareConflict = true;
+            break;
+          }
+        }
+
+        var conflicted = squareConflict ||
+              (conflicts["rows"].indexOf(cell.row) != -1) ||
+              (conflicts["columns"].indexOf(cell.col) != -1);
+
         cells.push(
-          <Cell x={cellX} y={cellY} width={this.cellWidth()} height={this.cellHeight()} value={cell.value} hasFocus={cell.hasFocus} />
+          <Cell x={cellX} y={cellY} width={this.cellWidth()} height={this.cellHeight()} value={cell.value} hasFocus={cell.hasFocus} isInConflict={conflicted} />
         );
       }
 

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sudoku test</title>
+<style>
+
+/** SVG elements */
+
+g.sudoku rect {
+  fill: none;
+}
+
+g.grid__em-lines line {
+  stroke-width: 1px;
+  stroke: black;
+}
+
+g.grid__lines {
+  stroke-width: 0.5px;
+  stroke: #333333;
+}
+
+rect.grid__cell__rect-focused {
+  fill: green;
+}
+
+.grid__cell-text {
+  font-family: Arial, Verdana, sans-serif;
+  /** X and Y properties are now the centre middle point of the text */
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: black;
+  cursor: pointer;
+}
+
+</style>
+</head>
+<body>
+
+<form id="size-form">
+  <dl>
+    <dt>Width</dt>
+    <dd><input type="text" id="size-form__width" value="300" /></dd>
+    <dt>Height</dt>
+    <dd><input type="text" id="size-form__height" value="300" /></dd>
+  </dl>
+  <input type="submit" value="Resize" />
+</form>
+
+<div id="container">
+</div>
+
+
+<script src="http://fb.me/react-0.10.0.js"></script>
+<script src="http://fb.me/JSXTransformer-0.10.0.js"></script>
+<script src="test.js" type="text/jsx"></script>
+</body>
+</html>

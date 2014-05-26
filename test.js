@@ -124,13 +124,23 @@
 
     handleClick: function (event) {
       var clientRect = this.getBoundingClientRect();
-      var xOffset = event.clientX - clientRect.left;
-      var yOffset = event.clientY - clientRect.top;
 
-      var col = Math.floor(xOffset / this.cellWidth());
-      var row = Math.floor(yOffset / this.cellHeight());
+      var x = event.clientX;
+      var y = event.clientY;
 
-      this.setFocus(col, row);
+      if (x >= clientRect.left && x <= clientRect.right &&
+          y >= clientRect.top && y <= clientRect.bottom) {
+
+        var xOffset = x - clientRect.left;
+        var yOffset = y - clientRect.top;
+
+        var col = Math.floor(xOffset / this.cellWidth());
+        var row = Math.floor(yOffset / this.cellHeight());
+
+        this.setFocus(col, row);
+      } else {
+        this.unfocus();
+      }
     },
 
     getBoundingClientRect: function (event) {
@@ -150,7 +160,7 @@
       });
     },
 
-    handleBlur: function (event) {
+    unfocus: function () {
       this.mapCells(function (cell) {
         return {
           col: cell.col,
@@ -206,11 +216,13 @@
     componentDidMount: function () {
       sizeForm.addEventListener("submit", this.handleResize);
       window.addEventListener("keydown", this.handleKeyDown);
+      window.addEventListener("click", this.handleClick);
     },
 
     componentWillUnmount: function () {
       sizeForm.removeEventListener("submit", this.handleResize);
       window.remoteEventListener("keydown", this.handleKeyDown);
+      window.addEventListener("click", this.handleClick);
     },
 
     render: function () {
@@ -231,7 +243,7 @@
       }
 
       return (
-        <svg width={this.state.width} height={this.state.height} onClick={this.handleClick}>
+        <svg width={this.state.width} height={this.state.height}>
           <g className="sudoku">
             {cells}
             <Grid width={this.state.width} height={this.state.height} />

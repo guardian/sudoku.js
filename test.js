@@ -173,17 +173,40 @@
       });
     },
 
+    hasFocus: function () {
+      for (var i = 0; i < this.state.cells.length; ++i) {
+        if (this.state.cells[i].hasFocus) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+
     handleKeyDown: function (event) {
-      if (event.keyCode >= 48 && event.keyCode <= 58) {
-        var number = event.keyCode - 48;
+      if (this.hasFocus()) {
+        if (event.keyCode >= 48 && event.keyCode <= 58) {
+          event.preventDefault();
 
-        this.mapCells(function (cell) {
-          var newValue = (cell.hasFocus && cell.editable) ? number : cell.value;
+          var number = event.keyCode - 48;
 
-          return React.addons.update(cell, {
-            value: {$set: newValue}
+          this.mapCells(function (cell) {
+            return React.addons.update(cell, {
+              value: {$set: (cell.hasFocus && cell.editable) ? number : cell.value}
+            });
           });
-        });
+        }
+
+        // backspace or delete 
+        if (event.keyCode == 8 || event.keyCode == 46) {
+          event.preventDefault();
+
+          this.mapCells(function (cell) {
+            return React.addons.update(cell, {
+              value: {$set: (cell.hasFocus && cell.editable) ? null : cell.value}
+            });
+          });
+        }
       }
     },
 

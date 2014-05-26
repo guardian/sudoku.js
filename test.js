@@ -14,14 +14,18 @@
       var middleX = x + (this.props.width / 2);
       var middleY = y + (this.props.height / 2);
 
-      var style = {
-        fontSize: this.props.width * 0.95
-      };
-
       /** Not sure why but couldn't get this to work */
       var className = (this.props.hasFocus) ? "grid__cell__rect-focused" : "grid__cell__rect-unfocused";
 
-      var style = (this.props.hasFocus) ? {fill: "#efefef"} : {};
+      var style = (function () {
+        if (this.props.hasFocus) {
+          return {fill: "#efefef"};
+        } else if (this.props.isInConflict) {
+          return {fill: "#ccffff"};
+        } else {
+          return {};
+        }
+      }).call(this);
 
       var textStyle = {
         fontSize: this.props.width * 0.9
@@ -102,7 +106,8 @@
             row: row,
             value: null,
             hasFocus: false,
-            editable: true
+            editable: true,
+            isInConflict: false
           });
         }
       }
@@ -212,17 +217,14 @@
     render: function () {
       var cells = [];
 
-      var cellWidth = this.state.width / 9;
-      var cellHeight = this.state.height / 9;
-
       for (var i = 0; i < this.state.cells.length; ++i) {
         var cell = this.state.cells[i];
 
-        var cellX = cellWidth * cell.col;
-        var cellY = cellHeight * cell.row;
+        var cellX = this.cellWidth() * cell.col;
+        var cellY = this.cellHeight() * cell.row;
 
         cells.push(
-          <Cell x={cellX} y={cellY} width={cellWidth} height={cellHeight} value={cell.value} hasFocus={cell.hasFocus} />
+          <Cell x={cellX} y={cellY} width={this.cellWidth()} height={this.cellHeight()} value={cell.value} hasFocus={cell.hasFocus} />
         );
       }
 
@@ -243,4 +245,3 @@
     document.getElementById("container")
   );
 })();
-

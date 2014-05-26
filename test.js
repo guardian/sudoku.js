@@ -234,7 +234,7 @@
         }
 
         if (focussedCell.editable) {
-          if (event.keyCode >= 48 && event.keyCode <= 58) {
+          if (event.keyCode >= 49 && event.keyCode <= 58) {
             var number = event.keyCode - 48;
             
             this.updateCell(col, row, {

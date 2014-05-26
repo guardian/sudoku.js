@@ -153,22 +153,17 @@
       var width = document.getElementById("size-form__width").value;
       var height = document.getElementById("size-form__height").value;
 
-      this.setState({
-        width: width,
-        height: height,
-        cells: this.state.cells
-      });
+      this.setState(React.addons.update(this.state, {
+        width: {$set: width},
+        height: {$set: height}
+      }));
     },
 
     unfocus: function () {
       this.mapCells(function (cell) {
-        return {
-          col: cell.col,
-          row: cell.row,
-          value: cell.value,
-          hasFocus: false,
-          editable: cell.editable
-        };
+        return React.addons.update(cell, {
+          hasFocus: {$set: false}
+        });
       });
     },
 
@@ -179,37 +174,26 @@
         this.mapCells(function (cell) {
           var newValue = (cell.hasFocus && cell.editable) ? number : cell.value;
 
-          return {
-            col: cell.col,
-            row: cell.row,
-            value: newValue,
-            hasFocus: cell.hasFocus,
-            editable: cell.editable        
-          };
+          return React.addons.update(cell, {
+            value: {$set: newValue}
+          });
         });
       }
     },
 
     mapCells: function (f) {
-      this.setState({
-        width: this.state.width,
-        height: this.state.height,
-        cells: this.state.cells.map(f)
-      });
+      this.setState(React.addons.update(this.state, {
+        cells: {$set: this.state.cells.map(f)}
+      }));
     },
 
     setFocus: function (col, row) {
       this.mapCells(function (cell) {
         var hasFocus = (cell.col == col && cell.row == row);
 
-        /** TODO: include Underscore and use Object.extend? */
-        return {
-          col: cell.col,
-          row: cell.row,
-          value: cell.value,
-          hasFocus: hasFocus,
-          editable: cell.editable
-        };
+        return React.addons.update(cell, {
+          hasFocus: {$set: hasFocus}
+        });
       });
     },
 

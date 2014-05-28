@@ -21,17 +21,9 @@
       var middleX = x + (this.props.width / 2);
       var middleY = y + (this.props.height / 2);
 
-      /** Not sure why but couldn't get this to work */
-      var className = (this.props.hasFocus) ? "grid__cell__rect-focused" : "grid__cell__rect-unfocused";
-
-      /** Would be nicer if we set a base tone based on whether editable, then applied a hue based on whether is in conflict,
-          and then darkened the square based on whether in focus. TODO: see how easy it would be to do this ... */
+      /** TODO use CSS classes instead */
       var style = (function () {
-        if (!this.props.editable && this.props.hasFocus) {
-          return {fill: "#BBBBBB"};
-        } if (!this.props.editable) {
-          return {fill: "#DDDDDD"};
-        } else if (this.props.hasFocus && this.props.isInConflict) {
+        if (this.props.hasFocus && this.props.isInConflict) {
           return {fill: "#FA5858"};
         } else if (this.props.hasFocus) {
           return {fill: "#efefef"};
@@ -45,6 +37,10 @@
       var textStyle = {
         fontSize: this.props.width * 0.9
       };
+
+      if (!this.props.editable) {
+        textStyle.fontWeight = "bold";
+      }
 
       return (
         <g className="grid__cell">

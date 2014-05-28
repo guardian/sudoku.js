@@ -24,8 +24,14 @@
       /** Not sure why but couldn't get this to work */
       var className = (this.props.hasFocus) ? "grid__cell__rect-focused" : "grid__cell__rect-unfocused";
 
+      /** Would be nicer if we set a base tone based on whether editable, then applied a hue based on whether is in conflict,
+          and then darkened the square based on whether in focus. TODO: see how easy it would be to do this ... */
       var style = (function () {
-        if (this.props.hasFocus && this.props.isInConflict) {
+        if (!this.props.editable && this.props.hasFocus) {
+          return {fill: "#BBBBBB"};
+        } if (!this.props.editable) {
+          return {fill: "#DDDDDD"};
+        } else if (this.props.hasFocus && this.props.isInConflict) {
           return {fill: "#FA5858"};
         } else if (this.props.hasFocus) {
           return {fill: "#efefef"};
@@ -106,15 +112,31 @@
 
   var Sudoku = React.createClass({
     getInitialState: function () {
+      var initialCells = this.props.initialCells;
+
+      var initialValues = {};
+
+      for (var i = 0; i < 9; ++i) {
+        initialValues[i] = {};
+      }
+
+      for (var i = 0; i < initialCells.length; ++i) {
+        var cell = initialCells[i];
+
+        initialValues[cell.col][cell.row] = cell.value;
+      }
+
       var cells = [];
 
       for (var col = 0; col < 9; col++) {
         for (var row = 0; row < 9; row++) {
+          var cellValue = initialValues[col].hasOwnProperty(row) ? initialValues[col][row] : null;
+
           cells.push({
             col: col,
             row: row,
-            value: null,
-            editable: true
+            value: cellValue,
+            editable: cellValue == null
           });
         }
       }
@@ -402,7 +424,7 @@
               (conflicts["columns"].indexOf(cell.col) != -1);
 
         cells.push(
-          <Cell x={cellX} y={cellY} width={this.cellWidth()} height={this.cellHeight()} value={cell.value} hasFocus={this.isFocussed(cell)} isInConflict={conflicted} />
+          <Cell x={cellX} y={cellY} width={this.cellWidth()} height={this.cellHeight()} value={cell.value} hasFocus={this.isFocussed(cell)} isInConflict={conflicted} editable={cell.editable} />
         );
       }
 
@@ -417,9 +439,11 @@
     }
   });
 
+  var testPuzzle = [{"col":0,"row":0,"value":1},{"col":6,"row":0,"value":7},{"col":0,"row":1,"value":2},{"col":3,"row":1,"value":3},{"col":4,"row":1,"value":4},{"col":6,"row":1,"value":6},{"col":8,"row":2,"value":4},{"col":1,"row":3,"value":3},{"col":2,"row":3,"value":4},{"col":5,"row":3,"value":1},{"col":6,"row":3,"value":2},{"col":8,"row":3,"value":5},{"col":0,"row":5,"value":6},{"col":2,"row":5,"value":1},{"col":3,"row":5,"value":2},{"col":6,"row":5,"value":3},{"col":7,"row":5,"value":4},{"col":0,"row":6,"value":7},{"col":2,"row":7,"value":8},{"col":4,"row":7,"value":3},{"col":5,"row":7,"value":4},{"col":8,"row":7,"value":1},{"col":2,"row":8,"value":5},{"col":8,"row":8,"value":8}];
+
   React.initializeTouchEvents(true);
   React.renderComponent(
-    <Sudoku />,
+    <Sudoku initialCells={testPuzzle} />,
     document.getElementById("container")
   );
 })();
